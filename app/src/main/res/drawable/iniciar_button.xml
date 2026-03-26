@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp"
+    android:height="52dp"
+    android:viewportWidth="220"
+    android:viewportHeight="52">
+
+    <!-- Sombra inferior (sobresalido) -->
+    <path
+        android:pathData="M8,6 H212 A8,8 0 0 1 220,14 V44 A8,8 0 0 1 212,52 H8 A8,8 0 0 1 0,44 V14 A8,8 0 0 1 8,6 Z"
+        android:fillColor="#1A4FA3"/>
+
+    <!-- Botón principal -->
+    <path
+        android:pathData="M8,0 H212 A8,8 0 0 1 220,8 V38 A8,8 0 0 1 212,46 H8 A8,8 0 0 1 0,38 V8 A8,8 0 0 1 8,0 Z">
+        <fill>
+            <gradient
+                android:type="linear"
+                android:startX="110"
+                android:startY="0"
+                android:endX="110"
+                android:endY="46"
+                android:startColor="#4DA3FF"
+                android:endColor="#2F6FEA"/>
+        </fill>
+    </path>
+
+</vector>
