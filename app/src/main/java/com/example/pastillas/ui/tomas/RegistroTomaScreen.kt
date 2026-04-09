@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.pastillas.data.model.Toma
@@ -37,6 +38,7 @@ fun RegistroTomaScreen(
 
     var expandedHorario by remember { mutableStateOf(false) }
     val horarios = listOf("Mañana", "Mediodía", "Almuerzo", "Tarde", "Cena", "Noche")
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -110,7 +112,7 @@ fun RegistroTomaScreen(
                     notificacionActiva = notificacion
                 )
 
-                viewModel.agregarToma(nuevaToma)
+                viewModel.agregarToma(context, nuevaToma)
                 navController.navigate("tomas_disponibles") {
                     popUpTo("tomas_disponibles") { inclusive = true }
                 }

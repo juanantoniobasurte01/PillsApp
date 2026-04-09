@@ -48,6 +48,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.core.app.NotificationManagerCompat
 import com.example.pastillas.ui.theme.PastillasTheme
 import com.example.pastillas.ui.ajustes.AjustesScreen
 import com.example.pastillas.ui.camara.CamaraScreen
@@ -61,11 +62,19 @@ import com.example.pastillas.ui.tomas.RegistroTomaScreen
 import com.example.pastillas.data.model.Toma
 import com.example.pastillas.ui.tomas.TomasDisponiblesScreen
 import com.example.pastillas.R
+import com.example.pastillas.ui.notificaciones.AlarmAudio
 import com.example.pastillas.ui.viewmodel.TomaViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
+    override fun onStart() {
+        super.onStart()
+        // Si hay una alarma sonando y el usuario abre la app, se para
+        AlarmAudio.stop()
+        NotificationManagerCompat.from(this).cancelAll()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -248,7 +257,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 
 
 
