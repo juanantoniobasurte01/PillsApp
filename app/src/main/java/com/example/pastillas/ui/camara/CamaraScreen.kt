@@ -54,6 +54,11 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
+import java.io.ByteArrayOutputStream
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -204,21 +209,21 @@ fun CamaraScreen(
 
                             //Canvas para dibujar los hitboxes encima
                             Canvas(modifier = Modifier.fillMaxSize()) {
-                                val modelSize = 640f
-                                val scale = minOf(size.width / modelSize, size.height / modelSize)
-                                val offsetX = (size.width - (modelSize * scale)) / 2f
-                                val offsetY = (size.height - (modelSize * scale)) / 2f
+                                val bmp = photoBitmap!!
+                                val scale = minOf(size.width / bmp.width, size.height / bmp.height)
+                                val offsetX = (size.width - (bmp.width * scale)) / 2f
+                                val offsetY = (size.height - (bmp.height * scale)) / 2f
 
                                 listaDeBoxes.forEach { box ->
                                     drawRect(
                                         color = Color.Green,
                                         topLeft = Offset(
-                                            (box.x * scale) + offsetX,
-                                            (box.y * scale) + offsetY
+                                            (box.left * scale) + offsetX,
+                                            (box.top * scale) + offsetY
                                         ),
                                         size = Size(
-                                            box.w * scale,
-                                            box.h * scale
+                                            (box.right - box.left) * scale,
+                                            (box.bottom - box.top) * scale
                                         ),
                                         style = Stroke(width = 6f)
                                     )
@@ -266,10 +271,24 @@ fun CamaraScreen(
 
 // Convertir ImageProxy a Bitmap
 fun ImageProxy.toBitmap(): Bitmap {
-    val buffer = planes[0].buffer
-    val bytes = ByteArray(buffer.remaining())
-    buffer.get(bytes)
-    val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    val yBuffer = planes[0].buffer
+    val uBuffer = planes[1].buffer
+    val vBuffer = planes[2].buffer
+
+    val ySize = yBuffer.remaining()
+    val uSize = uBuffer.remaining()
+    val vSize = vBuffer.remaining()
+
+    val nv21 = ByteArray(ySize + uSize + vSize)
+    yBuffer.get(nv21, 0, ySize)
+    vBuffer.get(nv21, ySize, vSize)
+    uBuffer.get(nv21, ySize + vSize, uSize)
+
+    val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+    val out = ByteArrayOutputStream()
+    yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, out)
+    val imageBytes = out.toByteArray()
+    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
     val matrix = Matrix()
     matrix.postRotate(imageInfo.rotationDegrees.toFloat())

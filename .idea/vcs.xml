@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/EntrenadorYoloPastillas" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/EntrenadorYoloPastillas/Modelo-YOLO-Detector-de-Pastillas" vcs="Git" />
   </component>
 </project>
