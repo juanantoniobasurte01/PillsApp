@@ -29,10 +29,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,6 +53,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.core.app.NotificationManagerCompat
+import com.example.pastillas.data.SettingsDataStore
+import com.example.pastillas.data.SettingsDefaults
 import com.example.pastillas.ui.theme.PastillasTheme
 import com.example.pastillas.ui.ajustes.AjustesScreen
 import com.example.pastillas.ui.camara.CamaraScreen
@@ -64,6 +70,7 @@ import com.example.pastillas.ui.tomas.TomasDisponiblesScreen
 import com.example.pastillas.R
 import com.example.pastillas.ui.notificaciones.AlarmAudio
 import com.example.pastillas.ui.viewmodel.TomaViewModel
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,9 +86,24 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val isDarkMode = remember { mutableStateOf(false) }
 
-            PastillasTheme(darkTheme = isDarkMode.value) {
+            //Persistencia en los ajustes
+            val settings = remember { SettingsDataStore(applicationContext) }
+
+            val persistedDarkMode by settings.modoOscuroFlow.collectAsState(
+                initial = SettingsDefaults.MODO_OSCURO
+            )
+            val scope = rememberCoroutineScope()
+            var isDarkMode by remember { mutableStateOf(SettingsDefaults.MODO_OSCURO) }
+
+
+
+            LaunchedEffect(persistedDarkMode) {
+                isDarkMode = persistedDarkMode
+            }
+
+            PastillasTheme(darkTheme = isDarkMode) {
+
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -89,7 +111,7 @@ class MainActivity : ComponentActivity() {
                 val historial = remember { mutableStateListOf<Triple<Toma, Int, Boolean>>() }
 
                 // Fondo segun el modo claro o oscuro
-                val backgroundPainter = if (isDarkMode.value) {
+                val backgroundPainter = if (isDarkMode) {
                     painterResource(id = R.drawable.dark_background)
                 } else {
                     painterResource(id = R.drawable.light_background)
@@ -157,7 +179,16 @@ class MainActivity : ComponentActivity() {
                                 HistorialScreen(navController = navController, historial = historial)
                             }
                             composable("ajustes") {
-                                AjustesScreen(navController = navController, isDarkMode)
+                                AjustesScreen(
+                                    navController = navController,
+                                    isDarkMode = isDarkMode,
+                                    onDarkModeChange = { value ->
+                                        isDarkMode = value
+                                        scope.launch {
+                                            settings.guardarModoOscuro(value)
+                                        }
+                                    }
+                                )
                             }
                             composable("main") {
                                 MainScreen(navController = navController, tomas = tomas)
@@ -257,8 +288,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-
 
 
 

@@ -6,42 +6,82 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.core.app.NotificationManagerCompat
+import androidx.navigation.NavController
 import com.example.pastillas.data.SettingsDataStore
+import com.example.pastillas.data.SettingsDefaults
 import com.example.pastillas.ui.components.botones.PillSwitch
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-
 @Composable
-fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean>) {
-
-    //Imports para guardar ajustes
+fun AjustesScreen(
+    navController: NavController,
+    isDarkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
+) {
     val context = LocalContext.current
     val settings = remember { SettingsDataStore(context) }
+    val scope = rememberCoroutineScope()
 
+    val persistedModoTerceraEdad by settings.modoTerceraEdadFlow.collectAsState(
+        initial = SettingsDefaults.MODO_TERCERA_EDAD
+    )
+    val persistedModoNotificacion by settings.modoNotificacionFlow.collectAsState(
+        initial = SettingsDefaults.MODO_NOTIFICACION
+    )
+    val modoPruebas by settings.modoPruebasFlow.collectAsState(
+        initial = SettingsDefaults.MODO_PRUEBAS
+    )
+    val horaPruebas by settings.horaPruebasFlow.collectAsState(
+        initial = SettingsDefaults.HORA_PRUEBAS
+    )
+    val minutoPruebas by settings.minutoPruebasFlow.collectAsState(
+        initial = SettingsDefaults.MINUTO_PRUEBAS
+    )
 
-
-    var terceraEdad by remember { mutableStateOf(false) }
-    val modoNotificacion by settings.modoNotificacionFlow.collectAsState(initial = true)
-    val modoPruebas by settings.modoPruebasFlow.collectAsState(initial = false)
-    val horaPruebas by settings.horaPruebasFlow.collectAsState(initial = 23)
-    val minutoPruebas by settings.minutoPruebasFlow.collectAsState(initial = 0)
-
+    var terceraEdad by rememberSaveable {
+        mutableStateOf(SettingsDefaults.MODO_TERCERA_EDAD)
+    }
+    var modoNotificacion by rememberSaveable {
+        mutableStateOf(SettingsDefaults.MODO_NOTIFICACION)
+    }
     var horaInput by remember(horaPruebas) { mutableStateOf(horaPruebas.toString()) }
     var minutoInput by remember(minutoPruebas) { mutableStateOf(minutoPruebas.toString()) }
+
+    LaunchedEffect(persistedModoTerceraEdad) {
+        terceraEdad = persistedModoTerceraEdad
+    }
+
+    LaunchedEffect(persistedModoNotificacion) {
+        modoNotificacion = persistedModoNotificacion
+    }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -55,8 +95,6 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
         true
     }
 
-
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -64,15 +102,12 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-
-        // Título de la pantalla
         Text(
             "Ajustes",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Modo Claro/Oscuro
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -84,13 +119,12 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
             )
 
             PillSwitch(
-                checked = isDarkMode.value,
-                onCheckedChange = { isDarkMode.value = it },
+                checked = isDarkMode,
+                onCheckedChange = { value ->
+                    onDarkModeChange(value)
+                }
             )
         }
-
-        // Modo Tercera Edad (ahora mismo no hace nada)
-        // Qiero que los botones del inicio de abajo los ponga en grises, tambien aumentar mas el boton central y todos los botones y aumentar textos
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -104,11 +138,15 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
 
             PillSwitch(
                 checked = terceraEdad,
-                onCheckedChange = { terceraEdad = it }
+                onCheckedChange = { value ->
+                    terceraEdad = value
+                    scope.launch {
+                        settings.guardarModoTerceraEdad(value)
+                    }
+                }
             )
         }
 
-        // Notificación / Alarma
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -122,16 +160,14 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
             PillSwitch(
                 checked = modoNotificacion,
                 onCheckedChange = { value ->
-                    CoroutineScope(Dispatchers.IO).launch {
+                    modoNotificacion = value
+                    scope.launch {
                         settings.guardarModoNotificacion(value)
                     }
                 }
             )
         }
 
-
-
-        // Boton permisis, si el usuario lo concede, el sistema permitira mostrar notificaciones.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsEnabled) {
             Button(
                 onClick = {
@@ -143,8 +179,6 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
             }
         }
 
-
-        // Boton que abre los ajustes de  alarmas para permitir full-screen
         if (!notificationsEnabled) {
             Button(
                 onClick = {
@@ -167,11 +201,6 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
             }
         }
 
-
-
-        // Boton: abre la pantalla del sistema para permitir alarmas exactas
-
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAlarmsAllowed) {
             Button(
                 onClick = {
@@ -185,8 +214,6 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
                 Text("Permitir alarmas exactas")
             }
         }
-
-        // Hora fija para pruebas (comentar/descomentar)
 
         /*
         Row(
@@ -202,7 +229,7 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
             PillSwitch(
                 checked = modoPruebas,
                 onCheckedChange = { value ->
-                    CoroutineScope(Dispatchers.IO).launch {
+                    scope.launch {
                         settings.guardarModoPruebas(value)
                     }
                 }
@@ -221,7 +248,7 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
                         horaInput = filtered
                         val hora = filtered.toIntOrNull()
                         if (hora != null && hora in 0..23) {
-                            CoroutineScope(Dispatchers.IO).launch {
+                            scope.launch {
                                 settings.guardarHoraPruebas(hora)
                             }
                         }
@@ -240,7 +267,7 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
                         minutoInput = filtered
                         val minuto = filtered.toIntOrNull()
                         if (minuto != null && minuto in 0..59) {
-                            CoroutineScope(Dispatchers.IO).launch {
+                            scope.launch {
                                 settings.guardarMinutoPruebas(minuto)
                             }
                         }
@@ -250,7 +277,7 @@ fun AjustesScreen(navController: NavController, isDarkMode: MutableState<Boolean
                     modifier = Modifier.weight(1f)
                 )
             }
-        }*/
-
+        }
+        */
     }
 }

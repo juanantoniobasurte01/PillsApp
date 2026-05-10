@@ -25,10 +25,11 @@ import com.example.pastillas.ui.components.cards.CardTomaDisponible
 import com.example.pastillas.ui.viewmodel.TomaViewModel
 
 @Composable
-fun TomasDisponiblesScreen(navController: NavController, viewModel: TomaViewModel = viewModel(), isDarkMode: MutableState<Boolean>) {
+fun TomasDisponiblesScreen(navController: NavController, viewModel: TomaViewModel = viewModel(), isDarkMode: Boolean) {
 
     var selectedToma by remember { mutableStateOf<Toma?>(null) }
-    val isDark = isDarkMode.value
+
+    val isDark = isDarkMode
     val tomas = viewModel.tomasDisponibles
 
     Box(modifier = Modifier.fillMaxSize()) {
