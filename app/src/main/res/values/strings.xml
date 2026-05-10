@@ -1,10 +1,16 @@
-<resources>
+﻿<resources>
     <string name="app_name">Pastillas</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="senior_help_button">COMO HACERLO</string>
+    <string name="senior_help_title">Ayuda paso a paso</string>
+    <string name="senior_help_step_1">1. Pulsar el botón.</string>
+    <string name="senior_help_step_2">2. Hacer foto.</string>
+    <string name="senior_help_step_3">3. Finalizar o repetir.</string>
+    <string name="senior_help_close">ENTENDIDO</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
