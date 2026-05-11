@@ -8,6 +8,9 @@ class TomaRepository(private val dao: TomaDao) {
     // Insertar una nueva toma
     suspend fun agregarToma(toma: Toma) = dao.insertarToma(toma)
 
+    // Actualizar una toma existente
+    suspend fun actualizarToma(toma: Toma) = dao.actualizarToma(toma)
+
     // Borrar una toma
     suspend fun borrarToma(toma: Toma) = dao.borrarToma(toma)
 

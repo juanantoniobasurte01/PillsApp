@@ -63,7 +63,6 @@ import com.example.pastillas.ui.components.botones.BotonIniciarToma
 import com.example.pastillas.ui.components.botones.BotonTomasDisponibles
 import com.example.pastillas.ui.confirmacion.ConfirmacionScreen
 import com.example.pastillas.ui.historial.HistorialScreen
-import com.example.pastillas.ui.notificaciones.AlarmAudio
 import com.example.pastillas.ui.theme.PastillasTheme
 import com.example.pastillas.ui.tomas.IniciarTomaScreen
 import com.example.pastillas.ui.tomas.RegistroTomaScreen
@@ -75,7 +74,6 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
-        AlarmAudio.stop()
         NotificationManagerCompat.from(this).cancelAll()
     }
 
@@ -166,6 +164,18 @@ class MainActivity : ComponentActivity() {
                                     viewModel = tomaViewModel
                                 )
                             }
+                            composable(
+                                "registro_toma/{tomaId}",
+                                arguments = listOf(navArgument("tomaId") { type = NavType.IntType })
+                            ) { backStackEntry ->
+                                val tomaId = backStackEntry.arguments?.getInt("tomaId") ?: -1
+                                val tomaToEdit = tomaViewModel.tomasDisponibles.firstOrNull { it.id == tomaId }
+                                RegistroTomaScreen(
+                                    navController = navController,
+                                    viewModel = tomaViewModel,
+                                    tomaToEdit = tomaToEdit
+                                )
+                            }
                             composable("historial") {
                                 HistorialScreen(navController = navController, historial = historial)
                             }
@@ -178,7 +188,8 @@ class MainActivity : ComponentActivity() {
                                         scope.launch {
                                             settings.guardarModoOscuro(value)
                                         }
-                                    }
+                                    },
+                                    viewModel = tomaViewModel
                                 )
                             }
                             composable("main") {

@@ -11,7 +11,11 @@ interface TomaDao {
 
     // Insertar una nueva toma
     @Insert
-    suspend fun insertarToma(toma: Toma)
+    suspend fun insertarToma(toma: Toma): Long
+
+    // Actualizar una toma existente
+    @Update
+    suspend fun actualizarToma(toma: Toma)
 
     // Borrar una toma
     @Delete

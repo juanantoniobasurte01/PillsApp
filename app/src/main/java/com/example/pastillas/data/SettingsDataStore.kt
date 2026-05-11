@@ -19,7 +19,6 @@ val Context.dataStore by preferencesDataStore(name = "settings")
 object SettingsKeys {
     val MODO_OSCURO = booleanPreferencesKey("modo_oscuro")
     val MODO_TERCERA_EDAD = booleanPreferencesKey("modo_tercera_edad")
-    val MODO_NOTIFICACION = booleanPreferencesKey("modo_notificacion")
     val MODO_PRUEBAS = booleanPreferencesKey("modo_pruebas")
     val HORA_PRUEBAS = intPreferencesKey("hora_pruebas")
     val MINUTO_PRUEBAS = intPreferencesKey("minuto_pruebas")
@@ -28,7 +27,6 @@ object SettingsKeys {
 object SettingsDefaults {
     const val MODO_OSCURO = false
     const val MODO_TERCERA_EDAD = false
-    const val MODO_NOTIFICACION = true
     const val MODO_PRUEBAS = false
     const val HORA_PRUEBAS = 23
     const val MINUTO_PRUEBAS = 0
@@ -56,11 +54,6 @@ class SettingsDataStore(private val context: Context) {
             preferences[SettingsKeys.MODO_TERCERA_EDAD] ?: SettingsDefaults.MODO_TERCERA_EDAD
         }
 
-    val modoNotificacionFlow: Flow<Boolean> =
-        preferencesFlow.map { preferences ->
-            preferences[SettingsKeys.MODO_NOTIFICACION] ?: SettingsDefaults.MODO_NOTIFICACION
-        }
-
     val modoPruebasFlow: Flow<Boolean> =
         preferencesFlow.map { preferences ->
             preferences[SettingsKeys.MODO_PRUEBAS] ?: SettingsDefaults.MODO_PRUEBAS
@@ -82,10 +75,6 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun guardarModoTerceraEdad(valor: Boolean) {
         guardarBooleano(SettingsKeys.MODO_TERCERA_EDAD, valor)
-    }
-
-    suspend fun guardarModoNotificacion(valor: Boolean) {
-        guardarBooleano(SettingsKeys.MODO_NOTIFICACION, valor)
     }
 
     suspend fun guardarModoPruebas(valor: Boolean) {

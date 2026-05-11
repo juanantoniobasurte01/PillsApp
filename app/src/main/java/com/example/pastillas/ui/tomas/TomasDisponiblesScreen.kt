@@ -1,14 +1,17 @@
 package com.example.pastillas.ui.tomas
 
-
-
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,27 +28,25 @@ import com.example.pastillas.ui.components.cards.CardTomaDisponible
 import com.example.pastillas.ui.viewmodel.TomaViewModel
 
 @Composable
-fun TomasDisponiblesScreen(navController: NavController, viewModel: TomaViewModel = viewModel(), isDarkMode: Boolean) {
-
+fun TomasDisponiblesScreen(
+    navController: NavController,
+    viewModel: TomaViewModel = viewModel(),
+    isDarkMode: Boolean
+) {
     var selectedToma by remember { mutableStateOf<Toma?>(null) }
 
-    val isDark = isDarkMode
     val tomas = viewModel.tomasDisponibles
 
     Box(modifier = Modifier.fillMaxSize()) {
-
-
-        // Lista de tomas
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(30.dp),
+                .padding(30.dp)
         ) {
             items(tomas) { toma ->
                 CardTomaDisponible(
                     toma = toma,
-                    isDark = isDark,
+                    isDark = isDarkMode,
                     onClick = { selectedToma = toma },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -54,11 +55,9 @@ fun TomasDisponiblesScreen(navController: NavController, viewModel: TomaViewMode
             }
         }
 
-        // añadir nueva toma
         BotonNuevaToma(
-
             text = "AÑADIR NUEVA TOMA",
-            onClick = {navController.navigate("registro_toma")},
+            onClick = { navController.navigate("registro_toma") },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
@@ -66,9 +65,6 @@ fun TomasDisponiblesScreen(navController: NavController, viewModel: TomaViewMode
         )
     }
 
-
-
-    // Detalles dela toma
     if (selectedToma != null) {
         AlertDialog(
             onDismissRequest = { selectedToma = null },
@@ -78,28 +74,31 @@ fun TomasDisponiblesScreen(navController: NavController, viewModel: TomaViewMode
                     Text("Descripción: ${selectedToma!!.descripcion}")
                     Text("Horario aprox: ${selectedToma!!.horario}")
                     Text("Notificación: ${if (selectedToma!!.notificacionActiva) "Sí" else "No"}")
+                    Spacer(modifier = Modifier.height(24.dp))
+                    BotonCerrarEliminar(
+                        text = "EDITAR",
+                        onClick = {
+                            navController.navigate("registro_toma/${selectedToma!!.id}")
+                            selectedToma = null
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    BotonCerrarEliminar(
+                        text = "ELIMINAR",
+                        onClick = {
+                            viewModel.eliminarToma(selectedToma!!)
+                            selectedToma = null
+                        }
+                    )
                 }
             },
-
-            confirmButton = {
-                BotonCerrarEliminar(
-                    text = "ELIMINAR",
-                    onClick = {
-                        viewModel.eliminarToma(selectedToma!!)
-                        selectedToma = null
-                    },
-
-                )
-
-            },
+            confirmButton = {},
             dismissButton = {
                 BotonCerrarEliminar(
                     text = "CERRAR",
-                    onClick = { selectedToma = null },
-
+                    onClick = { selectedToma = null }
                 )
             }
         )
     }
 }
-

@@ -1,11 +1,20 @@
 package com.example.pastillas.ui.tomas
 
-import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,20 +30,29 @@ import com.example.pastillas.ui.components.texedits.CajaHorario
 import com.example.pastillas.ui.components.texedits.CajaIntroducirNombre
 import com.example.pastillas.ui.viewmodel.TomaViewModel
 
-
 @Composable
 fun RegistroTomaScreen(
     navController: NavController,
-    viewModel: TomaViewModel
+    viewModel: TomaViewModel,
+    tomaToEdit: Toma? = null
 ) {
-    var nombre by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-    var numPastillas by remember { mutableStateOf(1) }
-    var horario by remember { mutableStateOf("Mañana") }
-    var notificacion by remember { mutableStateOf(true) }
-    var expandedCantidad by remember { mutableStateOf(false) }
+    val isEditing = tomaToEdit != null
+    var nombre by rememberSaveable(tomaToEdit?.id) {
+        mutableStateOf(tomaToEdit?.nombre.orEmpty())
+    }
+    var descripcion by rememberSaveable(tomaToEdit?.id) {
+        mutableStateOf(tomaToEdit?.descripcion.orEmpty())
+    }
+    var numPastillas by rememberSaveable(tomaToEdit?.id) {
+        mutableStateOf(tomaToEdit?.numeroPastillas ?: 1)
+    }
+    var horario by rememberSaveable(tomaToEdit?.id) {
+        mutableStateOf(tomaToEdit?.horario ?: "Mañana")
+    }
+    var notificacion by rememberSaveable(tomaToEdit?.id) {
+        mutableStateOf(tomaToEdit?.notificacionActiva ?: true)
+    }
     val cantidades = (1..6).toList()
-
 
     var expandedHorario by remember { mutableStateOf(false) }
     val horarios = listOf("Mañana", "Mediodía", "Almuerzo", "Tarde", "Cena", "Noche")
@@ -46,8 +64,6 @@ fun RegistroTomaScreen(
             .padding(30.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        // NOMBRE
         CajaIntroducirNombre(
             value = nombre,
             onValueChange = { if (it.length <= 30) nombre = it },
@@ -55,15 +71,11 @@ fun RegistroTomaScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        //DESCRIPCIÓN
         CajaDescripcion(
             value = descripcion,
             onValueChange = { descripcion = it }
         )
 
-
-
-        // CANTIDAD DE PASTILLAS
         CajaCantidadPastillas(
             numPastillas = numPastillas,
             cantidades = cantidades,
@@ -71,7 +83,6 @@ fun RegistroTomaScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // HORARIO
         CajaHorario(
             value = horario,
             horarios = horarios,
@@ -81,7 +92,6 @@ fun RegistroTomaScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        //NOTIFICACIÓN
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
@@ -93,26 +103,29 @@ fun RegistroTomaScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        //GUARDAR BUTT
         BotonGuardar(
-            text = "GUARDAR",
+            text = if (isEditing) "GUARDAR CAMBIOS" else "GUARDAR",
             onClick = {
-                //  Si el nombre está vacio, ponemos el texto por defecto
                 val nombreFinal = if (nombre.isBlank()) "Toma sin  nombre" else nombre
 
-
-                val nuevaToma = Toma(
+                val tomaGuardada = Toma(
+                    id = tomaToEdit?.id ?: 0,
                     nombre = nombreFinal,
                     descripcion = descripcion,
                     numeroPastillas = numPastillas,
-                    pastillasDetectadas = null,
-                    diaYfecha = System.currentTimeMillis(),
+                    pastillasDetectadas = tomaToEdit?.pastillasDetectadas,
+                    diaYfecha = tomaToEdit?.diaYfecha ?: System.currentTimeMillis(),
                     horario = horario,
-                    correcta = true,
+                    correcta = tomaToEdit?.correcta ?: true,
                     notificacionActiva = notificacion
                 )
 
-                viewModel.agregarToma(context, nuevaToma)
+                if (isEditing) {
+                    viewModel.actualizarToma(context, tomaGuardada)
+                } else {
+                    viewModel.agregarToma(context, tomaGuardada)
+                }
+
                 navController.navigate("tomas_disponibles") {
                     popUpTo("tomas_disponibles") { inclusive = true }
                 }

@@ -9,7 +9,7 @@ object TimeUtils {
     fun obtenerHora(horario: String): Pair<Int, Int> {
         val normalizado = horario.trim().lowercase(Locale("es", "ES"))
         return when (normalizado) {
-            "mañana", "manana" -> Pair(8, 0)
+            "mañana", "manana" -> Pair(9, 0)
             "mediodía", "mediodia" -> Pair(12, 0)
             "almuerzo" -> Pair(14, 0)
             "tarde" -> Pair(17, 0)

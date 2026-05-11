@@ -25,62 +25,35 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val nombre = intent.getStringExtra("nombre") ?: "Toma"
         val tomaId = intent.getIntExtra("tomaId", 0)
-        val usarAlarma = intent.getBooleanExtra("usarAlarma", true)
-
-        val activityIntent = Intent(context, AlarmActivity::class.java).apply {
-            putExtra("nombre", nombre)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
 
         val mainIntent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
 
-        val contentIntent = if (usarAlarma) activityIntent else mainIntent
-
         val fullScreenPendingIntent = PendingIntent.getActivity(
             context,
             tomaId,
-            contentIntent,
+            mainIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val channelId = if (usarAlarma) "alarmas" else "recordatorios"
-        val alarmSound: Uri = Settings.System.DEFAULT_ALARM_ALERT_URI
+        val channelId = "recordatorios"
         val notificationSound: Uri = Settings.System.DEFAULT_NOTIFICATION_URI
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = if (usarAlarma) {
-                android.app.NotificationChannel(
-                    channelId,
-                    "Alarmas",
-                    android.app.NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "Notificaciones de alarmas de tomas"
-                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-                    setSound(
-                        alarmSound,
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_ALARM)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    )
-                }
-            } else {
-                android.app.NotificationChannel(
-                    channelId,
-                    "Recordatorios",
-                    android.app.NotificationManager.IMPORTANCE_DEFAULT
-                ).apply {
-                    description = "Notificaciones de recordatorios de tomas"
-                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-                    setSound(
-                        notificationSound,
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    )
-                }
+            val channel = android.app.NotificationChannel(
+                channelId,
+                "Recordatorios",
+                android.app.NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notificaciones de recordatorios de tomas"
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                setSound(
+                    notificationSound,
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
             }
             val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
@@ -94,8 +67,7 @@ class AlarmReceiver : BroadcastReceiver() {
             ) == PackageManager.PERMISSION_GRANTED
 
             if (!granted) {
-                Log.w("ALARM", "POST_NOTIFICATIONS no concedido; intentando abrir actividad.")
-                context.startActivity(activityIntent)
+                Log.w("ALARM", "POST_NOTIFICATIONS no concedido; no se puede mostrar la notificacion.")
                 return
             }
         }
@@ -104,19 +76,12 @@ class AlarmReceiver : BroadcastReceiver() {
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Hora de tu toma")
             .setContentText(nombre)
-            .setPriority(if (usarAlarma) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
-            .setCategory(if (usarAlarma) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(fullScreenPendingIntent)
-
-        if (usarAlarma) {
-            builder
-                .setFullScreenIntent(fullScreenPendingIntent, true)
-                .setSound(alarmSound)
-        } else {
-            builder.setSound(notificationSound)
-        }
+            .setSound(notificationSound)
 
         val notification = builder.build()
 

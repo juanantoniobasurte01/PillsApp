@@ -38,13 +38,15 @@ import androidx.navigation.NavController
 import com.example.pastillas.data.SettingsDataStore
 import com.example.pastillas.data.SettingsDefaults
 import com.example.pastillas.ui.components.botones.PillSwitch
+import com.example.pastillas.ui.viewmodel.TomaViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun AjustesScreen(
     navController: NavController,
     isDarkMode: Boolean,
-    onDarkModeChange: (Boolean) -> Unit
+    onDarkModeChange: (Boolean) -> Unit,
+    viewModel: TomaViewModel
 ) {
     val context = LocalContext.current
     val settings = remember { SettingsDataStore(context) }
@@ -52,9 +54,6 @@ fun AjustesScreen(
 
     val persistedModoTerceraEdad by settings.modoTerceraEdadFlow.collectAsState(
         initial = SettingsDefaults.MODO_TERCERA_EDAD
-    )
-    val persistedModoNotificacion by settings.modoNotificacionFlow.collectAsState(
-        initial = SettingsDefaults.MODO_NOTIFICACION
     )
     val modoPruebas by settings.modoPruebasFlow.collectAsState(
         initial = SettingsDefaults.MODO_PRUEBAS
@@ -69,18 +68,11 @@ fun AjustesScreen(
     var terceraEdad by rememberSaveable {
         mutableStateOf(SettingsDefaults.MODO_TERCERA_EDAD)
     }
-    var modoNotificacion by rememberSaveable {
-        mutableStateOf(SettingsDefaults.MODO_NOTIFICACION)
-    }
     var horaInput by remember(horaPruebas) { mutableStateOf(horaPruebas.toString()) }
     var minutoInput by remember(minutoPruebas) { mutableStateOf(minutoPruebas.toString()) }
 
     LaunchedEffect(persistedModoTerceraEdad) {
         terceraEdad = persistedModoTerceraEdad
-    }
-
-    LaunchedEffect(persistedModoNotificacion) {
-        modoNotificacion = persistedModoNotificacion
     }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -147,27 +139,6 @@ fun AjustesScreen(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Modo Notificacion (${if (modoNotificacion) "Alarma" else "Notificacion"})",
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            PillSwitch(
-                checked = modoNotificacion,
-                onCheckedChange = { value ->
-                    modoNotificacion = value
-                    scope.launch {
-                        settings.guardarModoNotificacion(value)
-                    }
-                }
-            )
-        }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsEnabled) {
             Button(
                 onClick = {
@@ -185,7 +156,7 @@ fun AjustesScreen(
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
                             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                            putExtra(Settings.EXTRA_CHANNEL_ID, "alarmas")
+                            putExtra(Settings.EXTRA_CHANNEL_ID, "recordatorios")
                         }
                         context.startActivity(intent)
                     } else {
@@ -197,7 +168,7 @@ fun AjustesScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Ajustes de notificacion (Alarmas)")
+                Text("Ajustes de notificaciones")
             }
         }
 
@@ -211,9 +182,24 @@ fun AjustesScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Permitir alarmas exactas")
+                Text("Permitir recordatorios exactos")
             }
         }
+
+
+
+
+
+        //MODO PRUEBAS
+
+
+
+
+
+
+
+
+
 
         /*
         Row(
@@ -231,6 +217,7 @@ fun AjustesScreen(
                 onCheckedChange = { value ->
                     scope.launch {
                         settings.guardarModoPruebas(value)
+                        viewModel.reprogramarTomas(context)
                     }
                 }
             )
@@ -250,6 +237,9 @@ fun AjustesScreen(
                         if (hora != null && hora in 0..23) {
                             scope.launch {
                                 settings.guardarHoraPruebas(hora)
+                                if (modoPruebas) {
+                                    viewModel.reprogramarTomas(context)
+                                }
                             }
                         }
                     },
@@ -269,6 +259,9 @@ fun AjustesScreen(
                         if (minuto != null && minuto in 0..59) {
                             scope.launch {
                                 settings.guardarMinutoPruebas(minuto)
+                                if (modoPruebas) {
+                                    viewModel.reprogramarTomas(context)
+                                }
                             }
                         }
                     },
@@ -278,6 +271,17 @@ fun AjustesScreen(
                 )
             }
         }
+
+
         */
+
+
+
+
+
+
+
+
+
     }
 }
