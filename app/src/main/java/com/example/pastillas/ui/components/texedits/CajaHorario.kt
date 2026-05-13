@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
@@ -34,11 +33,12 @@ fun CajaHorario(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = MaterialTheme.colorScheme.surface
-    val isDark = isSystemInDarkTheme()
-    val shadowColor = if (isDark) Color(0x40000000) else Color(0x40000000)
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val shadowColor = Color(0x40000000)
 
     val displayText = if (value.isBlank()) "Horario" else value
-    val displayColor = if (value.isBlank()) Color.Gray else Color.Black
+    val displayColor = if (value.isBlank()) placeholderColor else textColor
 
     Box(
         modifier
@@ -66,7 +66,7 @@ fun CajaHorario(
         ) {
             Text(
                 text = displayText,
-                color = Color.Gray,
+                color = displayColor,
                 fontSize = 18.sp
             )
             Icon(
@@ -86,7 +86,7 @@ fun CajaHorario(
         ) {
             horarios.forEach { horario ->
                 DropdownMenuItem(
-                    text = { Text(horario, color = Color.Gray) },
+                    text = { Text(horario, color = textColor) },
                     onClick = {
                         onHorarioSelected(horario)
                         onExpandedChange(false)

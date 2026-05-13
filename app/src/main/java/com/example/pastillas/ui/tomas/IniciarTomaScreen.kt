@@ -29,7 +29,8 @@ fun IniciarTomaScreen(
         ) {
             Text(
                 text = "No hay tomas registradas",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
         return

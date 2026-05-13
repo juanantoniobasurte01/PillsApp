@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" >
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
 
@@ -21,13 +20,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Pastillas" >
-
-        <activity
-            android:name=".ui.notificaciones.AlarmActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Pastillas"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true" />
 
         <activity
             android:name=".ui.main.ComoUsarLaAppScreen"

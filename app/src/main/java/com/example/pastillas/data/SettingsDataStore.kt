@@ -22,6 +22,7 @@ object SettingsKeys {
     val MODO_PRUEBAS = booleanPreferencesKey("modo_pruebas")
     val HORA_PRUEBAS = intPreferencesKey("hora_pruebas")
     val MINUTO_PRUEBAS = intPreferencesKey("minuto_pruebas")
+    val MINUTOS_DESDE_AHORA_PRUEBAS = intPreferencesKey("minutos_desde_ahora_pruebas")
 }
 
 object SettingsDefaults {
@@ -30,6 +31,7 @@ object SettingsDefaults {
     const val MODO_PRUEBAS = false
     const val HORA_PRUEBAS = 23
     const val MINUTO_PRUEBAS = 0
+    const val MINUTOS_DESDE_AHORA_PRUEBAS = 0
 }
 
 class SettingsDataStore(private val context: Context) {
@@ -69,6 +71,12 @@ class SettingsDataStore(private val context: Context) {
             preferences[SettingsKeys.MINUTO_PRUEBAS] ?: SettingsDefaults.MINUTO_PRUEBAS
         }
 
+    val minutosDesdeAhoraPruebasFlow: Flow<Int> =
+        preferencesFlow.map { preferences ->
+            preferences[SettingsKeys.MINUTOS_DESDE_AHORA_PRUEBAS]
+                ?: SettingsDefaults.MINUTOS_DESDE_AHORA_PRUEBAS
+        }
+
     suspend fun guardarModoOscuro(valor: Boolean) {
         guardarBooleano(SettingsKeys.MODO_OSCURO, valor)
     }
@@ -87,6 +95,10 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun guardarMinutoPruebas(minuto: Int) {
         guardarEntero(SettingsKeys.MINUTO_PRUEBAS, minuto)
+    }
+
+    suspend fun guardarMinutosDesdeAhoraPruebas(minutos: Int) {
+        guardarEntero(SettingsKeys.MINUTOS_DESDE_AHORA_PRUEBAS, minutos)
     }
 
     private suspend fun guardarBooleano(key: Preferences.Key<Boolean>, valor: Boolean) {

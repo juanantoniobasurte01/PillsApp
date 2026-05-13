@@ -67,13 +67,23 @@ private fun SeniorHelpScreen(
         painterResource(id = R.drawable.light_background)
     }
 
-    val instructionImages = listOf(
-        R.drawable.instruccion_1,
-        R.drawable.instruccion_2,
-        R.drawable.instruccion_3,
-        R.drawable.instruccion_4,
-        R.drawable.instruccion_5
-    )
+    val instructionImages = if (isDarkMode) {
+        listOf(
+            R.drawable.instruccion_dark_1,
+            R.drawable.instruccion_dark_2,
+            R.drawable.instruccion_dark_3,
+            R.drawable.instruccion_dark_4,
+            R.drawable.instruccion_dark_5
+        )
+    } else {
+        listOf(
+            R.drawable.instruccion_1,
+            R.drawable.instruccion_2,
+            R.drawable.instruccion_3,
+            R.drawable.instruccion_4,
+            R.drawable.instruccion_5
+        )
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -98,7 +99,10 @@ fun RegistroTomaScreen(
         ) {
             PillSwitch(checked = notificacion, onCheckedChange = { notificacion = it })
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Habilitar notificación")
+            Text(
+                text = "Habilitar notificacion",
+                color = MaterialTheme.colorScheme.onBackground
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

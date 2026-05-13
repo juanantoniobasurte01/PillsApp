@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
@@ -36,12 +35,12 @@ fun CajaCantidadPastillas(
     modifier: Modifier = Modifier
 ) {
     val textColor = MaterialTheme.colorScheme.onSurface
+    val placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant
     val backgroundColor = MaterialTheme.colorScheme.surface
     var expandedCantidad by remember { mutableStateOf(false) }
-    val isDark = isSystemInDarkTheme()
-    val shadowColor = if (isDark) Color(0x40000000) else Color(0x40000000)
+    val shadowColor = Color(0x40000000)
     val displayText = if (numPastillas <= 0) "Cantidad de pastillas" else "$numPastillas pastillas"
-    val displayColor = if (numPastillas <= 0) Color.Gray else Color.Black
+    val displayColor = if (numPastillas <= 0) placeholderColor else textColor
 
     Box(
         modifier
@@ -69,7 +68,7 @@ fun CajaCantidadPastillas(
         ) {
             Text(
                 text = displayText,
-                color = Color.Gray,
+                color = displayColor,
                 fontSize = 18.sp
             )
             Icon(
@@ -86,7 +85,7 @@ fun CajaCantidadPastillas(
         ) {
             cantidades.forEach { cantidad ->
                 DropdownMenuItem(
-                    text = { Text("$cantidad", color = Color.Gray) },
+                    text = { Text("$cantidad", color = textColor) },
                     onClick = {
                         onCantidadSelected(cantidad)
                         expandedCantidad = false

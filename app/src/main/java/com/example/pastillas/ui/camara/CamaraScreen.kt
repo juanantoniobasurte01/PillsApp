@@ -182,7 +182,8 @@ fun CamaraScreen(
         Text(
             text = "Toma: ${toma.nombre}",
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
 

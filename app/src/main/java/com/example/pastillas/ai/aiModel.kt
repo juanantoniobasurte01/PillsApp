@@ -101,7 +101,6 @@ class aiModel(context: Context) {
         }
 
         val data = if (raw.size > 0 && raw.size > raw[0].size) {
-            // Forma [num_boxes, num_attrs] -> trasponer a [num_attrs, num_boxes]
             val numBoxes = raw.size
             val numAttrs = raw[0].size
             val t = Array(numAttrs) { FloatArray(numBoxes) }

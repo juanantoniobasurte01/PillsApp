@@ -7,7 +7,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pastillas.data.database.DatabaseProvider
+import com.example.pastillas.data.model.HistorialEntry
 import com.example.pastillas.data.model.Toma
+import com.example.pastillas.data.repository.HistorialRepository
 import com.example.pastillas.data.repository.TomaRepository
 import com.example.pastillas.ui.notificaciones.AlarmScheduler
 import kotlinx.coroutines.launch
@@ -15,17 +17,23 @@ import kotlinx.coroutines.launch
 class TomaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: TomaRepository
+    private val historialRepository: HistorialRepository
     private val appContext = application.applicationContext
     val tomasDisponibles = mutableStateListOf<Toma>()
+    val historial = mutableStateListOf<HistorialEntry>()
 
     init {
-        val dao = DatabaseProvider.getDatabase(application).tomaDao()
-        repository = TomaRepository(dao)
+        val database = DatabaseProvider.getDatabase(application)
+        repository = TomaRepository(database.tomaDao())
+        historialRepository = HistorialRepository(database.historialEntryDao())
 
         // Cargar todas las tomas al iniciar
         viewModelScope.launch {
             val todas = repository.obtenerTodasLasTomas()
             tomasDisponibles.addAll(todas)
+
+            val historialGuardado = historialRepository.obtenerHistorial()
+            historial.addAll(historialGuardado)
         }
     }
 
@@ -66,5 +74,18 @@ class TomaViewModel(application: Application) : AndroidViewModel(application) {
         AlarmScheduler.cancelarToma(appContext, toma.id)
         repository.borrarToma(toma)
         tomasDisponibles.remove(toma)
+    }
+
+    fun guardarEnHistorial(toma: Toma, pastillasDetectadas: Int, correcta: Boolean) = viewModelScope.launch {
+        val entrada = HistorialEntry(
+            nombreToma = toma.nombre,
+            numeroPastillasEsperadas = toma.numeroPastillas,
+            pastillasDetectadas = pastillasDetectadas,
+            correcta = correcta,
+            fechaRegistro = System.currentTimeMillis(),
+            horario = toma.horario
+        )
+        val insertedId = historialRepository.guardarEntrada(entrada).toInt()
+        historial.add(0, entrada.copy(id = insertedId))
     }
 }

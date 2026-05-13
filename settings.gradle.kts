@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Pastillas"
+rootProject.name = "PillsApp"
 include(":app")
-

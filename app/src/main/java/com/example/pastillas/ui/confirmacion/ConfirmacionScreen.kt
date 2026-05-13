@@ -41,7 +41,8 @@ fun ConfirmacionScreen(
 
         Text(
             text = "Pastillas detectadas: $pastillasDetectadas",
-            fontSize = 24.sp
+            fontSize = 24.sp,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(48.dp))

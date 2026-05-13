@@ -30,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -100,8 +99,6 @@ class MainActivity : ComponentActivity() {
                 val tomaViewModel: TomaViewModel = viewModel()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-                val tomas = remember { mutableStateListOf<Toma>() }
-                val historial = remember { mutableStateListOf<Triple<Toma, Int, Boolean>>() }
 
                 val backgroundPainter = if (isDarkMode) {
                     painterResource(id = R.drawable.dark_background)
@@ -121,7 +118,7 @@ class MainActivity : ComponentActivity() {
                         containerColor = Color.Transparent,
                         topBar = {
                             TopAppBar(
-                                title = { Text("PillApp (provisional)") },
+                                title = { Text("PillsApp") },
                                 navigationIcon = {
                                     if (currentRoute != "main") {
                                         IconButton(onClick = { navController.navigateUp() }) {
@@ -177,7 +174,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable("historial") {
-                                HistorialScreen(navController = navController, historial = historial)
+                                HistorialScreen(historial = tomaViewModel.historial)
                             }
                             composable("ajustes") {
                                 AjustesScreen(
@@ -195,7 +192,7 @@ class MainActivity : ComponentActivity() {
                             composable("main") {
                                 MainScreen(
                                     navController = navController,
-                                    tomas = tomas,
+                                    tomas = tomaViewModel.tomasDisponibles,
                                     modoTerceraEdad = modoTerceraEdad
                                 )
                             }
@@ -236,7 +233,7 @@ class MainActivity : ComponentActivity() {
                                     indexToma = indexToma,
                                     pastillasDetectadas = pastillasDetectadas,
                                     onGuardarHistorial = { t, detectadas, correcta ->
-                                        historial.add(Triple(t, detectadas, correcta))
+                                        tomaViewModel.guardarEnHistorial(t, detectadas, correcta)
                                     }
                                 )
                             }

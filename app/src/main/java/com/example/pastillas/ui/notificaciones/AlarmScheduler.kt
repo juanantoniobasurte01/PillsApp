@@ -20,20 +20,28 @@ object AlarmScheduler {
 
         val settings = SettingsDataStore(context)
         val modoPruebas = settings.modoPruebasFlow.first()
-        val (hora, minuto) = if (modoPruebas) {
-            val horaPruebas = settings.horaPruebasFlow.first()
-            val minutoPruebas = settings.minutoPruebasFlow.first()
-            Pair(horaPruebas, minutoPruebas)
-        } else {
-            TimeUtils.obtenerHora(toma.horario)
-        }
+        val minutosDesdeAhoraPruebas = settings.minutosDesdeAhoraPruebasFlow.first()
 
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, hora)
-            set(Calendar.MINUTE, minuto)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
+        val calendar = if (modoPruebas && minutosDesdeAhoraPruebas > 0) {
+            Calendar.getInstance().apply {
+                timeInMillis = System.currentTimeMillis() + (minutosDesdeAhoraPruebas * 60_000L)
+            }
+        } else {
+            val (hora, minuto) = if (modoPruebas) {
+                val horaPruebas = settings.horaPruebasFlow.first()
+                val minutoPruebas = settings.minutoPruebasFlow.first()
+                Pair(horaPruebas, minutoPruebas)
+            } else {
+                TimeUtils.obtenerHora(toma.horario)
+            }
+
+            Calendar.getInstance().apply {
+                timeInMillis = System.currentTimeMillis()
+                set(Calendar.HOUR_OF_DAY, hora)
+                set(Calendar.MINUTE, minuto)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
         }
 
         Log.d("ALARM", "ENTRA A programarToma")

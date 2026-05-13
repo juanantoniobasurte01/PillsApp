@@ -16,11 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,9 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.example.pastillas.data.SettingsDataStore
 import com.example.pastillas.data.SettingsDefaults
+import com.example.pastillas.ui.components.botones.BotonDialogo
 import com.example.pastillas.ui.components.botones.PillSwitch
 import com.example.pastillas.ui.viewmodel.TomaViewModel
 import kotlinx.coroutines.launch
@@ -49,6 +53,7 @@ fun AjustesScreen(
     viewModel: TomaViewModel
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val settings = remember { SettingsDataStore(context) }
     val scope = rememberCoroutineScope()
 
@@ -64,6 +69,9 @@ fun AjustesScreen(
     val minutoPruebas by settings.minutoPruebasFlow.collectAsState(
         initial = SettingsDefaults.MINUTO_PRUEBAS
     )
+    val minutosDesdeAhoraPruebas by settings.minutosDesdeAhoraPruebasFlow.collectAsState(
+        initial = SettingsDefaults.MINUTOS_DESDE_AHORA_PRUEBAS
+    )
 
     var terceraEdad by rememberSaveable {
         mutableStateOf(SettingsDefaults.MODO_TERCERA_EDAD)
@@ -75,16 +83,40 @@ fun AjustesScreen(
         terceraEdad = persistedModoTerceraEdad
     }
 
+    var notificationsEnabled by remember { mutableStateOf(false) }
+    var exactAlarmsAllowed by remember { mutableStateOf(true) }
+
+    fun refreshPermissionState() {
+        notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        exactAlarmsAllowed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = context.getSystemService(AlarmManager::class.java)
+            alarmManager?.canScheduleExactAlarms() == true
+        } else {
+            true
+        }
+    }
+
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { }
+    ) {
+        refreshPermissionState()
+    }
 
-    val notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
-    val exactAlarmsAllowed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val alarmManager = context.getSystemService(AlarmManager::class.java)
-        alarmManager?.canScheduleExactAlarms() == true
-    } else {
-        true
+    LaunchedEffect(Unit) {
+        refreshPermissionState()
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshPermissionState()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Column(
@@ -139,61 +171,66 @@ fun AjustesScreen(
             )
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsEnabled) {
-            Button(
-                onClick = {
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                },
-                modifier = Modifier.fillMaxWidth()
+        if (!notificationsEnabled || !exactAlarmsAllowed) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Permitir notificaciones")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsEnabled) {
+                    BotonDialogo(
+                        text = "PERMITIR NOTIFICACIONES",
+                        onClick = {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        },
+                        width = 300.dp,
+                        height = 60.dp
+                    )
+                }
+
+                if (!notificationsEnabled) {
+                    BotonDialogo(
+                        text = "AJUSTES NOTIFICACIONES",
+                        onClick = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+                                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    putExtra(Settings.EXTRA_CHANNEL_ID, "recordatorios")
+                                }
+                                context.startActivity(intent)
+                            } else {
+                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                }
+                                context.startActivity(intent)
+                            }
+                        },
+                        width = 300.dp,
+                        height = 60.dp
+                    )
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAlarmsAllowed) {
+                    BotonDialogo(
+                        text = "PERMITIR RECORDATORIOS",
+                        onClick = {
+                            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                            context.startActivity(intent)
+                        },
+                        width = 300.dp,
+                        height = 60.dp
+                    )
+                }
             }
         }
 
-        if (!notificationsEnabled) {
-            Button(
-                onClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
-                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                            putExtra(Settings.EXTRA_CHANNEL_ID, "recordatorios")
-                        }
-                        context.startActivity(intent)
-                    } else {
-                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        }
-                        context.startActivity(intent)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Ajustes de notificaciones")
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !exactAlarmsAllowed) {
-            Button(
-                onClick = {
-                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                        data = Uri.parse("package:${context.packageName}")
-                    }
-                    context.startActivity(intent)
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Permitir recordatorios exactos")
-            }
-        }
 
 
 
 
-
-        //MODO PRUEBAS
-
-
-
+        //MODO PRUEBAS (comentar luego)
 
 
 
@@ -202,6 +239,9 @@ fun AjustesScreen(
 
 
         /*
+
+
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -224,6 +264,38 @@ fun AjustesScreen(
         }
 
         if (modoPruebas) {
+            Text(
+                text = "Anadir tiempo rapido",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                listOf(1, 3, 5).forEach { minutos ->
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                settings.guardarMinutosDesdeAhoraPruebas(minutos)
+                                viewModel.reprogramarTomas(context)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("+$minutos min")
+                    }
+                }
+            }
+
+            if (minutosDesdeAhoraPruebas > 0) {
+                Text(
+                    text = "Prueba rapida activa: +$minutosDesdeAhoraPruebas min.",
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -236,6 +308,7 @@ fun AjustesScreen(
                         val hora = filtered.toIntOrNull()
                         if (hora != null && hora in 0..23) {
                             scope.launch {
+                                settings.guardarMinutosDesdeAhoraPruebas(0)
                                 settings.guardarHoraPruebas(hora)
                                 if (modoPruebas) {
                                     viewModel.reprogramarTomas(context)
@@ -258,6 +331,7 @@ fun AjustesScreen(
                         val minuto = filtered.toIntOrNull()
                         if (minuto != null && minuto in 0..59) {
                             scope.launch {
+                                settings.guardarMinutosDesdeAhoraPruebas(0)
                                 settings.guardarMinutoPruebas(minuto)
                                 if (modoPruebas) {
                                     viewModel.reprogramarTomas(context)
@@ -270,10 +344,24 @@ fun AjustesScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            if (minutosDesdeAhoraPruebas > 0) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            settings.guardarMinutosDesdeAhoraPruebas(0)
+                            viewModel.reprogramarTomas(context)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Volver a hora fija")
+                }
+            }
         }
 
-
         */
+
 
 
 
